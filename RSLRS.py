@@ -1,7 +1,4 @@
-'''
-求活动域时采用二分查找来初步确定属于那个等价类
-上下同时删除
-'''
+
 import numpy as np
 import pandas as pd
 import warnings
@@ -22,19 +19,19 @@ from sklearn.preprocessing import MinMaxScaler
 import warnings
 import csv
 
-warnings.filterwarnings("ignore")  # 忽略警告
+warnings.filterwarnings("ignore")  # ignore warning
 np.set_printoptions(suppress=True)
 np.set_printoptions(threshold=np.inf)
 
 '''
-划分等价类
-atts：属性集
-data：数据集
-return：返回等价类，二维列表
+Divide equivalence classes
+atts：attribute set
+data：data set
+return：Returns the equivalence class, a two-dimensional list
 '''
 def eql_class_split(not_redu, current_equ_classes, data):
     ud_equ_classes = []
-    for equ_class in current_equ_classes:  # 加入最重要的属性，更新等价类
+    for equ_class in current_equ_classes:  # Add the most important properties, update the equivalence class
         new_equ_classes = {}
         for sample in equ_class:
             if data[sample, not_redu] not in new_equ_classes:
@@ -46,14 +43,14 @@ def eql_class_split(not_redu, current_equ_classes, data):
     return ud_equ_classes
 
 '''
-属性约简
+attribute reduction
 '''
 def att_rdtion(data):
-    current_equ_class = [[i for i in range(len(data))]]  # current_equ_class用来保存当前的等价类，初始整个数据集为一个等价类
-    not_redund_atts = []    #保存约简属性
+    current_equ_class = [[i for i in range(len(data))]]  # current_equ_class is used to save the current equivalence class, and the entire dataset is initially an equivalence class
+    not_redund_atts = []    #Save Reduced Properties
     if len(data) != 0:
-        redund_atts = [i for i in range(len(data[0, :-2]))]  # 全部属性的索引列表
-        active_re = {}  # 保存每个属性的等价类
+        redund_atts = [i for i in range(len(data[0, :-2]))]  # index list of all attributes
+        active_re = {}  # holds the equivalence class for each attribute
 
         for redund_att in redund_atts:
             result1 = eql_class_split(redund_att, current_equ_class, data)
@@ -62,20 +59,20 @@ def att_rdtion(data):
         active_re_keys = list(active_re_keys)
 
         active_list111 = {}
-        # 获取单个属性等价类的首字段
+        # Get the smallest sample number in a single attribute equivalence class
         for index in active_re_keys:
             list444 = []
             for item in active_re[index]:
                 list444.append(item[0])
             active_list111[index] = list444
-        #计算第一个属性，因为在计算第一个属性的时候非活动域为空，所以此时直接在整个数据集上计算
+        #Calculate the first property. Because the non-active region is empty when the first attribute is calculated, it is calculated directly on the entire data set at this time.
         max_num1 = 0
         prepare_att1 = -1
         for index_1 in active_re_keys:
             re_list = []
             num_re_111 = 0
             for new_item in active_re[index_1]:
-                list11 = []  # 用来保存每个等价类的决策属性
+                list11 = []  # used to hold decision attributes for each equivalence class
                 for att_num in new_item:
                     list11.append(data[att_num][-2])
                 if len(set(list11)) == 1:
@@ -88,11 +85,11 @@ def att_rdtion(data):
         active_re_keys.remove(prepare_att1)
         not_redund_atts.append(prepare_att1)
         current_equ_class = active_re[prepare_att1]
-        #属性约简
+        #attribute reduction
         while redund_atts:
-            stemp_eql_class = {}  # 用来保存求正域时候产生的临时等价类
+            stemp_eql_class = {}  # Used to save the temporary equivalence class generated when finding the positive region
             list_item = []
-            for equ_class in current_equ_class:  # 求边界域
+            for equ_class in current_equ_class:  # find boundary region
                 list_split = []
                 for index in equ_class:
                     list_split.append(data[index][-2])
@@ -102,33 +99,32 @@ def att_rdtion(data):
             if len(list_item) > 0:
                 for item in list_item:
                     current_equ_class.remove(item)
-            board_area = current_equ_class.copy()  # 获得边界域
+            board_area = current_equ_class.copy()  # get bounding region
             prepare_att = -1
             max_num = 0
 
             for index in active_re_keys:
-                lists = active_re[index]  # 每个属性下的等价类
-                board_area_stemp = board_area.copy()  # 临时存储等价类，保存当前的活动域
-                active_list = []  # 保存是非活动域的等价类
+                lists = active_re[index]  # Equivalence class under each attribute
+                board_area_stemp = board_area.copy()  # Temporary storage of equivalence classes, saving the current active region
+                active_list = []  # Save equivalence classes for non-active region
 
                 if (2 * len(board_area_stemp) < len(active_re[index])):
-                    num_re_111 = 0  # 当前属性下的新增正域个数
-                    # 求正域
-                    new_eql_class = eql_class_split(index, board_area_stemp, data)  # new_eql_class用来保存加入一个属性后新的等价类
+                    num_re_111 = 0  # The number of new positive region under the current attribute
+                    new_eql_class = eql_class_split(index, board_area_stemp, data)  # new_eql_class is used to save the new equivalence class after adding an attribute
                     stemp_eql_class[index] = new_eql_class.copy()
-                    num_class = len(new_eql_class) - len(board_area_stemp)  # 新增等价类的个数
+                    num_class = len(new_eql_class) - len(board_area_stemp)  # The number of newly added equivalence classes
                     for new_item in new_eql_class:
-                        list11 = []  # 用来保存每个等价类的决策属性
+                        list11 = []  #used to hold decision attributes for each equivalence class
                         for att_num in new_item:
                             list11.append(data[att_num][-2])
                         if len(set(list11)) == 1:
                             num_re_111 += len(new_item)
-                    if num_class != 0:       #计算属性的相对重要度
+                    if num_class != 0:       #Calculate the relative importance of attributes
                         if num_re_111 / num_class> max_num:
                             max_num = num_re_111/ num_class
                             prepare_att = index
                 else:
-                    for item in board_area_stemp:  # 这层循环是用来求活动域的
+                    for item in board_area_stemp:  # This layer of loop is used to find the active region
                         num2 = serarch(active_list111[index], item[0])
                         k = 0
                         l = binarySearch(lists[num2], 0, len(lists[num2]) - 1, item[0])
@@ -145,7 +141,7 @@ def att_rdtion(data):
                                     k += 1
                                 else:
                                     break
-                        if k == len(item) - 2:  # 第一个和最后一个元素已经判断过了
+                        if k == len(item) - 2:  # The first and last elements have been judged
                             active_list.append(item)
                             del lists[num2][l:r+1]
                     if len(active_list) > 0:
@@ -153,26 +149,25 @@ def att_rdtion(data):
                             board_area_stemp.remove(item)
                     if len(board_area_stemp) == 0:
                         continue
-                    num_re_111 = 0  # 当前属性下的新增正域个数
-                    # 求正域
-                    new_eql_class = eql_class_split(index, board_area_stemp, data)  # new_eql_class用来保存加入一个属性后新的等价类
+                    num_re_111 = 0  # The number of new positive region under the current attribute
+                    new_eql_class = eql_class_split(index, board_area_stemp, data)  # new_eql_class is used to save the new equivalence class after adding an attribute
                     stemp_eql_class[index] = new_eql_class.copy()
 
-                    num_class = len(new_eql_class) - len(board_area_stemp)  # 新增等价类的个数
+                    num_class = len(new_eql_class) - len(board_area_stemp)  # The number of newly added equivalence classes
                     for new_item in new_eql_class:
-                        list11 = []  # 用来保存每个等价类的决策属性
+                        list11 = []  # used to hold decision attributes for each equivalence class
                         for att_num in new_item:
                             list11.append(data[att_num][-2])
                         if len(set(list11)) == 1:
                             num_re_111 += len(new_item)
-                    #计算属性的相对重要度
+                    #Calculate the relative importance of attributes
                     if num_class!=0:
                         if num_re_111/ num_class > max_num:
                             max_num = num_re_111/ num_class
                             prepare_att = index
                             for iii in active_list:
                                 stemp_eql_class[index].append(iii)
-            if prepare_att < 0:  # prepare_att<0表示所有实行均不增加正域，停止循环
+            if prepare_att < 0:  # prepare_att<0 means that all executions do not increase the positive region and stop the loop
                 break
             redund_atts.remove(prepare_att)
             current_equ_class = stemp_eql_class[prepare_att].copy()
@@ -185,20 +180,20 @@ def att_rdtion(data):
 def binarySearch(arr, l, r, x):
     left = 0
     right = r
-    while left <= right:  # 循环条件
-        mid = (left + right) // 2  # 获取中间位置，数字的索引（序列前提是有序的）
-        if x < arr[mid]:  # 如果查询数字比中间数字小，那就去二分后的左边找，
-            right = mid - 1  # 来到左边后，需要将右变的边界换为mid-1
-        elif x > arr[mid]:  # 如果查询数字比中间数字大，那么去二分后的右边找
-            left = mid + 1  # 来到右边后，需要将左边的边界换为mid+1
+    while left <= right:
+        mid = (left + right) // 2
+        if x < arr[mid]:
+            right = mid - 1
+        elif x > arr[mid]:
+            left = mid + 1
         else:
-            return mid  # 如果查询数字刚好为中间值，返回该值得索引
-    return -2  #
+            return mid
+    return -2
 
 '''
-二分查找
-lis：要查找的集合
-num：要查找的数字
+binary search
+lis：target set
+num：target number
 '''
 def serarch(lis, num):
     left = 0
@@ -207,16 +202,16 @@ def serarch(lis, num):
         # if (right - 1 == left):
         #     return left
         mid = left+(right-left) // 2
-        if num < lis[mid]:  # 如果查询数字比中间数字小，那就去二分后的左边找，
-            right = mid - 1  # 来到左边后，需要将右变的边界换为mid-1
-        elif num > lis[mid]:  # 如果查询数字比中间数字大，那么去二分后的右边找
-            left = mid + 1  # 来到右边后，需要将左边的边界换为mid+1
+        if num < lis[mid]:
+            right = mid - 1
+        elif num > lis[mid]:
+            left = mid + 1
         else:
             return mid
     return left - 1
 
 '''
-计算一维数组的均值和标准差
+Calculate the mean and standard deviation of a 1D array
 '''
 def mean_std(a):
     a = np.array(a)
@@ -224,10 +219,10 @@ def mean_std(a):
     return a.mean(), std
 
 '''
-粗糙概念树进行分类
-re：约简结果
-data：数据集
-train_data：训练集
+Rough concept tree for classification
+re：reduction result
+data：data set
+train_data：Training set
 '''
 def classifier(re, data, train_data):
     eql_class = [[i for i in range(len(data))]]
@@ -236,7 +231,7 @@ def classifier(re, data, train_data):
     atts_dict = judge_re(re, eql_class, data)
     atts_dict_keylist11 = sorted(list(atts_dict.keys()))
 
-    right_num = 0  # 表示预测正确的样本数量
+    right_num = 0  # Indicates the correct number of samples to predict
     for train_sample in train_data:
         list44 = []
         for index in re:
@@ -273,36 +268,34 @@ def classifier(re, data, train_data):
     return acc
 
 def judge_re(re,eql_class,data):
-    atts_dict ={}      #用来保存每个属性集对应的决策属性
-    # re_list = []
-    # board_list = []
+    atts_dict ={}      #Used to save the decision attributes corresponding to each attribute set
     for new_item in eql_class:
         list22 =[]
         for index in re:
             list22.append(data[new_item[0]][index])
 
-        list11 = []  # 用来保存每个等价类的决策属性
+        list11 = []  #used to hold decision attributes for each equivalence class
         for att_num in new_item:
             list11.append(data[att_num][-2])
         atts_dict[str(list22)] =max(list11, key=list11.count)
 
     return atts_dict
 
-classifiers = ['LR'] #所用的分类器
-keys = ["Amazon_initial_50_30_10000"]  #所用的数据集
+classifiers = ['LR'] #Classifier used
+keys = ["Amazon_initial_50_30_10000"]  #data set used
 for key in keys:
-    df = pd.read_csv("D:\\新数据集\\" + key + ".csv", header=None)
+    df = pd.read_csv("D:\\path", header=None)
     data = df.values
-    numberSample, numberAttribute = data.shape
+    numberSample, numberAttribute =data.shape
 
-    #数据的离散化处理
+    #Data discretization
     # for i in range(1, len(data[0])):
     #     start1_time = time.clock()
     #     # print(i)
     #     if len(set(data[:, i])) == 1:
     #         continue
-    #     group = KF.Chi_Discretization(df, i, 0, max_interval=10, binning_method='chiMerge', feature_type=0)  # 分箱
-    #     for j in range(len(data)):  # 数据替换 直接替换到原数据上
+    #     group = KF.Chi_Discretization(df, i, 0, max_interval=10, binning_method='chiMerge', feature_type=0)  # binning
+    #     for j in range(len(data)):  # Data replacement Direct replacement to the original data
     #         k = 0
     #         while (True):
     #             # print(k)
@@ -321,12 +314,12 @@ for key in keys:
     data = np.hstack((data[:, 1:], data[:, 0].reshape(numberSample, 1)))
 
     orderAttribute = np.array([i for i in range(0, numberSample)]).reshape(numberSample,
-                                                                           1)  # 创建一个列表保存数字序列从1到numberSample
+                                                                           1)  # Create a list holding the sequence of numbers from 1 to numberSample
     data = np.hstack((data, orderAttribute))
     a = time.clock()
     re = att_rdtion(data)
     b = time.clock()
-    print("时间开销===========>", b - a)
+    print("time===========>", b - a)
 
 
     for c in range(len(classifiers)):
@@ -352,19 +345,23 @@ for key in keys:
             orderAttribute = data[:, -2]
             scores = cross_val_score(clf, mat_data, orderAttribute, cv=10)
             avg1, std1 = mean_std(scores)
-            print("实验精度", avg1, "\t", std1)
+            print("acc", avg1, "\t", std1)
             end_time2 = time.clock()
             run_time2 = end_time2 - start_time2
             result = []
             result.append(key)
             result.append(format(avg1, '.4f') + '±' + format(std1, '.4f'))
-            with open(r'E:\\shiyanjieguo\\7.3.csv', 'a+', encoding='utf-8-sig',
+            with open(r'E:\\path', 'a+', encoding='utf-8-sig',
                       newline='') as f:
                 writer = csv.writer(f)
                 writer.writerow(result)
         else:
-            print("本次未约简")
+            print("This time is not reduced")
             break
+
+
+
+
 
 
 
